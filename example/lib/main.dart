@@ -1,11 +1,17 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart' as image;
+import 'package:native_device_orientation/native_device_orientation.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:wechat_camera_picker/wechat_camera_picker.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(MyApp());
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
@@ -40,29 +46,94 @@ class _MyHomePageState extends State<MyHomePage> {
   Uint8List? data;
 
   Future<void> pick(BuildContext context) async {
+    NativeDeviceOrientation? currentOrientation;
     final Size size = MediaQuery.of(context).size;
     final double scale = MediaQuery.of(context).devicePixelRatio;
-    try {
-      final AssetEntity? _entity = await CameraPicker.pickFromCamera(
-        context,
-        enableRecording: true,
-      );
-      if (_entity != null && entity != _entity) {
-        entity = _entity;
-        if (mounted) {
-          setState(() {});
-        }
-        data = await _entity.thumbDataWithSize(
-          (size.width * scale).toInt(),
-          (size.height * scale).toInt(),
+
+    AssetPicker.pickAssets(
+      context,
+      maxAssets: 13,
+      requestType: RequestType.image,
+      textDelegate: EnglishTextDelegate(),
+      specialItemPosition: SpecialItemPosition.prepend,
+      specialItemBuilder: (BuildContext context) {
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () async {
+            final AssetEntity? result = await CameraPicker.pickFromCamera(
+                context,
+                enableRecording: true,
+                lockCaptureOrientation: DeviceOrientation.portraitUp,
+                onCameraShutterPressed: () async {
+              currentOrientation = await NativeDeviceOrientationCommunicator()
+                  .orientation(useSensor: true)
+                  .timeout(const Duration(milliseconds: 300),
+                      onTimeout: () => NativeDeviceOrientation.portraitUp);
+            }, onEntitySaving: (
+                    {BuildContext? context,
+                    File? file,
+                    CameraPickerViewType? viewType}) async {
+              final image.Image imagee =
+                  image.decodeImage(file!.readAsBytesSync())!;
+              final image.Image? orientationFixedImg =
+                  await _fixExifRotation(imagee, currentOrientation!);
+              if (orientationFixedImg != null) {
+                await file.writeAsBytes(image.encodeJpg(orientationFixedImg));
+                print('wtf');
+              }
+            });
+
+            if (result == null) {
+              return;
+            }
+
+            try {
+              // NativeDeviceOrientationCommunicator().onOrientationChanged(useSensor: true).listen((event) {
+              //   currentOrientation ??= event;
+              //   print('vkl $event');
+              // });
+              final AssetEntity _entity = result;
+              if (entity != _entity) {
+                entity = _entity;
+                // final image.Image imagee =
+                //     image.decodeImage((await entity!.originFile)!.readAsBytesSync())!;
+                // final image.Image? orientationFixedImg =
+                //     await _fixExifRotation(imagee, currentOrientation!);
+                // if (orientationFixedImg != null) {
+                //   File file = (await entity!.file)!;
+                //   await file.writeAsBytes(image.encodeJpg(orientationFixedImg));
+                // }
+                if (mounted) {
+                  setState(() {});
+                }
+                data = await _entity.thumbDataWithSize(
+                  (size.width * scale).toInt(),
+                  (size.height * scale).toInt(),
+                );
+                if (mounted) {
+                  setState(() {});
+                }
+              }
+            } catch (e) {
+              rethrow;
+            }
+
+            final AssetPicker<AssetEntity, AssetPathEntity>? picker =
+                context.findAncestorWidgetOfExactType();
+            final DefaultAssetPickerProvider? p =
+                picker?.builder.provider as DefaultAssetPickerProvider?;
+            if (p != null) {
+              await p.currentPathEntity?.refreshPathProperties();
+              await p.switchPath(p.currentPathEntity);
+              p.selectAsset(result);
+            }
+          },
+          child: const Center(
+            child: Icon(Icons.camera_enhance, size: 42.0),
+          ),
         );
-        if (mounted) {
-          setState(() {});
-        }
-      }
-    } catch (e) {
-      rethrow;
-    }
+      },
+    );
   }
 
   @override
@@ -85,5 +156,19 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.camera_enhance),
       ),
     );
+  }
+}
+
+Future<image.Image?> _fixExifRotation(
+    image.Image bakedImage, NativeDeviceOrientation orientation) async {
+  switch (orientation) {
+    case NativeDeviceOrientation.landscapeLeft:
+      return image.copyRotate(bakedImage, -90);
+    case NativeDeviceOrientation.landscapeRight:
+      return image.copyRotate(bakedImage, 90);
+    case NativeDeviceOrientation.portraitDown:
+      return image.copyRotate(bakedImage, 180);
+    default:
+      return null;
   }
 }

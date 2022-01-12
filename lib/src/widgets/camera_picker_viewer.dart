@@ -217,7 +217,6 @@ class _CameraPickerViewerState extends State<CameraPickerViewer> {
         viewType: pickerType,
         file: previewFile,
       );
-      return;
     }
     Future<AssetEntity?> saveFuture;
 

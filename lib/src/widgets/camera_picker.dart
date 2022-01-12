@@ -54,6 +54,7 @@ class CameraPicker extends StatefulWidget {
     this.onEntitySaving,
     this.onError,
     this.lockCaptureOrientation,
+    this.onCameraShutterPressed,
     CameraPickerTextDelegate? textDelegate,
   })  : assert(
           enableRecording == true || onlyEnableRecording != true,
@@ -75,6 +76,8 @@ class CameraPicker extends StatefulWidget {
       Constants.textDelegate = DefaultCameraPickerTextDelegate();
     }
   }
+  
+  final Future<void> Function()? onCameraShutterPressed;
   
   final DeviceOrientation? lockCaptureOrientation;
 
@@ -188,8 +191,9 @@ class CameraPicker extends StatefulWidget {
     EntitySaveCallback? onEntitySaving,
     CameraErrorHandler? onError,
     bool useRootNavigator = true, 
-    DeviceOrientation? lockCaptureOrientation
-  }) {
+    DeviceOrientation? lockCaptureOrientation, 
+    Future<void> Function()? onCameraShutterPressed
+    }) {
     if (enableRecording != true && onlyEnableRecording == true) {
       throw ArgumentError('Recording mode error.');
     }
@@ -220,6 +224,7 @@ class CameraPicker extends StatefulWidget {
           onEntitySaving: onEntitySaving,
           onError: onError,
           lockCaptureOrientation: lockCaptureOrientation,
+          onCameraShutterPressed: onCameraShutterPressed
         ),
         transitionCurve: Curves.easeIn,
         transitionDuration: _kRouteDuration,
@@ -774,6 +779,7 @@ class CameraPickerState extends State<CameraPicker>
   /// taking pictures.
   /// 仅当初始化成功且相机未在拍照时拍照。
   Future<void> takePicture() async {
+    await widget.onCameraShutterPressed?.call();
     if (!controller.value.isInitialized) {
       handleErrorWithHandler(
         StateError('Camera has not initialized.'),
