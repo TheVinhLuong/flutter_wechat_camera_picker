@@ -53,6 +53,8 @@ class CameraPicker extends StatefulWidget {
     this.foregroundBuilder,
     this.onEntitySaving,
     this.onError,
+    this.lockCaptureOrientation,
+    this.onCameraShutterPressed,
     CameraPickerTextDelegate? textDelegate,
   })  : assert(
           enableRecording == true || onlyEnableRecording != true,
@@ -74,6 +76,10 @@ class CameraPicker extends StatefulWidget {
       Constants.textDelegate = DefaultCameraPickerTextDelegate();
     }
   }
+  
+  final Future<void> Function()? onCameraShutterPressed;
+  
+  final DeviceOrientation? lockCaptureOrientation;
 
   /// The number of clockwise quarter turns the camera view should be rotated.
   /// 摄像机视图顺时针旋转次数，每次90度
@@ -184,8 +190,10 @@ class CameraPicker extends StatefulWidget {
     Widget Function(CameraValue)? foregroundBuilder,
     EntitySaveCallback? onEntitySaving,
     CameraErrorHandler? onError,
-    bool useRootNavigator = true,
-  }) {
+    bool useRootNavigator = true, 
+    DeviceOrientation? lockCaptureOrientation, 
+    Future<void> Function()? onCameraShutterPressed
+    }) {
     if (enableRecording != true && onlyEnableRecording == true) {
       throw ArgumentError('Recording mode error.');
     }
@@ -215,6 +223,8 @@ class CameraPicker extends StatefulWidget {
           foregroundBuilder: foregroundBuilder,
           onEntitySaving: onEntitySaving,
           onError: onError,
+          lockCaptureOrientation: lockCaptureOrientation,
+          onCameraShutterPressed: onCameraShutterPressed
         ),
         transitionCurve: Curves.easeIn,
         transitionDuration: _kRouteDuration,
@@ -567,6 +577,9 @@ class CameraPickerState extends State<CameraPicker>
 
       try {
         await controller.initialize();
+        if(widget.lockCaptureOrientation != null) {
+          await controller.lockCaptureOrientation(widget.lockCaptureOrientation);
+        }
         if (shouldPrepareForVideoRecording) {
           await controller.prepareForVideoRecording();
         }
@@ -766,6 +779,7 @@ class CameraPickerState extends State<CameraPicker>
   /// taking pictures.
   /// 仅当初始化成功且相机未在拍照时拍照。
   Future<void> takePicture() async {
+    await widget.onCameraShutterPressed?.call();
     if (!controller.value.isInitialized) {
       handleErrorWithHandler(
         StateError('Camera has not initialized.'),
