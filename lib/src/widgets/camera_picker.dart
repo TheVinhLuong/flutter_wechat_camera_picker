@@ -577,7 +577,7 @@ class CameraPickerState extends State<CameraPicker>
 
       try {
         await controller.initialize();
-        if(widget.lockCaptureOrientation != null) {
+        if (widget.lockCaptureOrientation != null) {
           await controller.lockCaptureOrientation(widget.lockCaptureOrientation);
         }
         if (shouldPrepareForVideoRecording) {
