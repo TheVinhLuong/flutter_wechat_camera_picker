@@ -79,6 +79,7 @@ class CameraPicker extends StatefulWidget {
   
   final Future<void> Function()? onCameraShutterPressed;
   
+  /// Whether we must lock the orientation of the camera with predefined [CameraDescription]
   final DeviceOrientation? lockCaptureOrientation;
 
   /// The number of clockwise quarter turns the camera view should be rotated.
