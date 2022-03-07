@@ -23,9 +23,9 @@ Language: [English](README.md) | 中文简体
   - [准备工作 🍭](#准备工作-)
   - [使用方法 📖](#使用方法-)
     - [简单的使用方法](#简单的使用方法)
+    - [使用配置](#使用配置)
   - [常见问题 💭](#常见问题-)
     - [iOS 上的预览在旋转时行为诡异](#iOS-上的预览在旋转时行为诡异)
-
 
 ## 特性 ✨
 
@@ -42,7 +42,7 @@ Language: [English](README.md) | 中文简体
 ## 截图 📸
 
 | ![](https://tva1.sinaimg.cn/large/007S8ZIlgy1ggtt6yrdqej30u01t017w.jpg) | ![](https://tva1.sinaimg.cn/large/007S8ZIlgy1ggtt6yh3x4j30u01t0wuo.jpg) |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+|-------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | ![](https://tva1.sinaimg.cn/large/007S8ZIlgy1ggtt6z1h7xj30u01t01kx.jpg) | ![](https://tva1.sinaimg.cn/large/007S8ZIlgy1ggtt6zarvhj30u01t0x5f.jpg) |
 
 ## 准备工作 🍭
@@ -58,34 +58,66 @@ Flutter SDK：`>=2.0.0` 。
 
 ## 使用方法 📖
 
-| 参数名                        | 类型                            | 描述                                                              | 默认值                                  |
-| ---------------------------- | ------------------------------- | ---------------------------------------------------------------   | -------------------------------------- |
-| enableRecording              | `bool`                          | 选择器是否可以录像                                                  | `false`                                |
-| onlyEnableRecording          | `bool`                          | 选择器是否仅可以录像。只在 `enableRecording` 为 `true` 时有效。       | `false`                                |
-| enableTapRecording           | `bool`                          | 选择器是否可以单击录像。只在 `onlyEnableRecording` 为 `true` 时生效。 | `false`                                |
-| enableAudio                  | `bool`                          | 选择器是否需要录制音频。只在 `enableRecording` 为 `true` 时有效。     | `true`                                 |
-| enableSetExposure            | `bool`                          | 用户是否可以在界面上通过点击设定曝光点                                | `true`                                 |
-| enableExposureControlOnPoint | `bool`                          | 用户是否可以根据已经设置的曝光点调节曝光度                            | `true`                                 |
-| enablePinchToZoom            | `bool`                          | 用户是否可以在界面上双指缩放相机对焦                                 | `true`                                 |
-| enablePullToZoomInRecord     | `bool`                          | 用户是否可以在录制视频时上拉缩放                                     | `true`                                 |
-| shouldDeletePreviewFile      | `bool`                          | 返回页面时是否删除预览文件                                          | `false`                                |
-| shouldAutoPreviewVideo       | `bool`                          | 在预览时是否直接播放视频                                            | `false`                                |
-| maximumRecordingDuration     | `Duration`                      | 录制视频最长时长                                                   | `const Duration(seconds: 15)`          |
-| theme                        | `ThemeData?`                    | 选择器的主题                                                       | `CameraPicker.themeData(C.themeColor)` |
-| textDelegate                 | `CameraPickerTextDelegate?`     | 控制部件中的文字实现                                               | `DefaultCameraPickerTextDelegate`      |
-| resolutionPreset             | `ResolutionPreset`              | 相机的分辨率预设                                                   | `ResolutionPreset.max`                 |
-| cameraQuarterTurns           | `int`                           | 摄像机视图顺时针旋转次数，每次 90 度                                | `0`                                    |
-| imageFormatGroup             | `ImageFormatGroup`              | 输出图像的格式描述                                                 | `ImageFormatGroup.unknown`             |
-| preferredLensDirection       | `CameraLensDirection`           | 首次使用相机时首选的镜头方向                                        | `CameraLensDirection.back`             |
-| foregroundBuilder            | `Widget Function(CameraValue)?` | 覆盖在相机预览上方的前景构建                                        | null                                   |
-| onEntitySaving               | `EntitySaveCallback?`           | 在查看器中保存图片时的回调                                          | null                                   |
-| onError                      | `CameraErrorHandler?`           | 拍摄照片过程中的自定义错误处理                                      | null                                   |
+### 简单的使用方法
+
+```dart
+final AssetEntity? entity = await CameraPicker.pickFromCamera(context);
+```
+
+### 使用配置
+
+你可以使用 `CameraPickerConfig` 来调整选择时的行为。
+
+```dart
+final AssetEntity? entity = await CameraPicker.pickFromCamera(
+  context,
+  pickerConfig: const CameraPickerConfig(),
+);
+```
+
+`CameraPickerConfig` 的成员说明：
 
 ### 简单的使用方法
 
 ```dart
 final AssetEntity? entity = await CameraPicker.pickFromCamera(context);
 ```
+
+你可以使用 `CameraPickerConfig` 来调整选择时的行为。
+
+```dart
+final AssetEntity? entity = await CameraPicker.pickFromCamera(
+  context,
+  pickerConfig: const CameraPickerConfig(),
+);
+```
+
+`CameraPickerConfig` 的成员说明：
+
+| 参数名                          | 类型                          | 描述                                                 | 默认值                                    |
+|------------------------------|-----------------------------|----------------------------------------------------|----------------------------------------|
+| enableRecording              | `bool`                      | 选择器是否可以录像                                          | `false`                                |
+| onlyEnableRecording          | `bool`                      | 选择器是否仅可以录像。只在 `enableRecording` 为 `true` 时有效。      | `false`                                |
+| enableTapRecording           | `bool`                      | 选择器是否可以单击录像。只在 `onlyEnableRecording` 为 `true` 时生效。 | `false`                                |
+| enableAudio                  | `bool`                      | 选择器是否需要录制音频。只在 `enableRecording` 为 `true` 时有效。     | `true`                                 |
+| enableSetExposure            | `bool`                      | 用户是否可以在界面上通过点击设定曝光点                                | `true`                                 |
+| enableExposureControlOnPoint | `bool`                      | 用户是否可以根据已经设置的曝光点调节曝光度                              | `true`                                 |
+| enablePinchToZoom            | `bool`                      | 用户是否可以在界面上双指缩放相机对焦                                 | `true`                                 |
+| enablePullToZoomInRecord     | `bool`                      | 用户是否可以在录制视频时上拉缩放                                   | `true`                                 |
+| shouldDeletePreviewFile      | `bool`                      | 返回页面时是否删除预览文件                                      | `false`                                |
+| shouldAutoPreviewVideo       | `bool`                      | 在预览时是否直接播放视频                                       | `false`                                |
+| maximumRecordingDuration     | `Duration`                  | 录制视频最长时长                                           | `const Duration(seconds: 15)`          |
+| theme                        | `ThemeData?`                | 选择器的主题                                             | `CameraPicker.themeData(C.themeColor)` |
+| textDelegate                 | `CameraPickerTextDelegate?` | 控制部件中的文字实现                                         | `DefaultCameraPickerTextDelegate`      |
+| resolutionPreset             | `ResolutionPreset`          | 相机的分辨率预设                                           | `ResolutionPreset.max`                 |
+| cameraQuarterTurns           | `int`                       | 摄像机视图顺时针旋转次数，每次 90 度                               | `0`                                    |
+| imageFormatGroup             | `ImageFormatGroup`          | 输出图像的格式描述                                          | `ImageFormatGroup.unknown`             |
+| preferredLensDirection       | `CameraLensDirection`       | 首次使用相机时首选的镜头方向                                     | `CameraLensDirection.back`             |
+| lockCaptureOrientation       | `DeviceOrientation?`        | 摄像机在拍摄时锁定的旋转角度                                     | null                                   |
+| foregroundBuilder            | `ForegroundBuilder?`        | 覆盖在相机预览上方的前景构建                                     | null                                   |
+| previewTransformBuilder      | `PreviewTransformBuilder?`  | 对相机预览做变换的构建                                        | null                                   |
+| onEntitySaving               | `EntitySaveCallback?`       | 在查看器中保存图片时的回调                                      | null                                   |
+| onError                      | `CameraErrorHandler?`       | 拍摄照片过程中的自定义错误处理                                    | null                                   |
 
 ## 常见问题 💭
 
