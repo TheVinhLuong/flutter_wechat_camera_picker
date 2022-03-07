@@ -9,9 +9,9 @@
         android:required="true"/>
 
     <application
-        android:name="io.flutter.app.FlutterApplication"
         android:label="wechat_camera_picker_demo"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

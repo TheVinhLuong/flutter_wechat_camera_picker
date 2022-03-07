@@ -52,87 +52,95 @@ class _MyHomePageState extends State<MyHomePage> {
 
     AssetPicker.pickAssets(
       context,
-      maxAssets: 13,
-      requestType: RequestType.image,
-      textDelegate: EnglishTextDelegate(),
-      specialItemPosition: SpecialItemPosition.prepend,
-      specialItemBuilder: (BuildContext context) {
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () async {
-            final AssetEntity? result = await CameraPicker.pickFromCamera(
-                context,
-                enableRecording: true,
-                lockCaptureOrientation: DeviceOrientation.portraitUp,
-                onCameraShutterPressed: () async {
-              currentOrientation = await NativeDeviceOrientationCommunicator()
-                  .orientation(useSensor: true)
-                  .timeout(const Duration(milliseconds: 300),
-                      onTimeout: () => NativeDeviceOrientation.portraitUp);
-            }, onEntitySaving: (
-                    {BuildContext? context,
-                    File? file,
-                    CameraPickerViewType? viewType}) async {
-              final image.Image imagee =
-                  image.decodeImage(file!.readAsBytesSync())!;
-              final image.Image? orientationFixedImg =
-                  await _fixExifRotation(imagee, currentOrientation!);
-              if (orientationFixedImg != null) {
-                await file.writeAsBytes(image.encodeJpg(orientationFixedImg));
-                print('wtf');
+      pickerConfig: AssetPickerConfig(
+        maxAssets: 13,
+        requestType: RequestType.image,
+        specialItemPosition: SpecialItemPosition.prepend,
+        specialItemBuilder:
+            (BuildContext context, AssetPathEntity? assetPathentity, int? i) {
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
+              final AssetEntity? result = await CameraPicker.pickFromCamera(
+                  context,
+                  pickerConfig: CameraPickerConfig(
+                      enableRecording: true,
+                      lockCaptureOrientation: DeviceOrientation.portraitUp,
+                      onCameraShutterPressed: () async {
+                        currentOrientation =
+                            await NativeDeviceOrientationCommunicator()
+                                .orientation(useSensor: true)
+                                .timeout(const Duration(milliseconds: 300),
+                                    onTimeout: () =>
+                                        NativeDeviceOrientation.portraitUp);
+                      },
+                      onEntitySaving: (
+                          {BuildContext? context,
+                          File? file,
+                          CameraPickerViewType? viewType}) async {
+                        final image.Image imagee =
+                            image.decodeImage(file!.readAsBytesSync())!;
+                        final image.Image? orientationFixedImg =
+                            await _fixExifRotation(imagee, currentOrientation!);
+                        if (orientationFixedImg != null) {
+                          await file.writeAsBytes(
+                              image.encodeJpg(orientationFixedImg));
+                          print('wtf');
+                        }
+                      }));
+
+              if (result == null) {
+                return;
               }
-            });
 
-            if (result == null) {
-              return;
-            }
-
-            try {
-              // NativeDeviceOrientationCommunicator().onOrientationChanged(useSensor: true).listen((event) {
-              //   currentOrientation ??= event;
-              //   print('vkl $event');
-              // });
-              final AssetEntity _entity = result;
-              if (entity != _entity) {
-                entity = _entity;
-                // final image.Image imagee =
-                //     image.decodeImage((await entity!.originFile)!.readAsBytesSync())!;
-                // final image.Image? orientationFixedImg =
-                //     await _fixExifRotation(imagee, currentOrientation!);
-                // if (orientationFixedImg != null) {
-                //   File file = (await entity!.file)!;
-                //   await file.writeAsBytes(image.encodeJpg(orientationFixedImg));
-                // }
-                if (mounted) {
-                  setState(() {});
+              try {
+                // NativeDeviceOrientationCommunicator().onOrientationChanged(useSensor: true).listen((event) {
+                //   currentOrientation ??= event;
+                //   print('vkl $event');
+                // });
+                final AssetEntity _entity = result;
+                if (entity != _entity) {
+                  entity = _entity;
+                  // final image.Image imagee =
+                  //     image.decodeImage((await entity!.originFile)!.readAsBytesSync())!;
+                  // final image.Image? orientationFixedImg =
+                  //     await _fixExifRotation(imagee, currentOrientation!);
+                  // if (orientationFixedImg != null) {
+                  //   File file = (await entity!.file)!;
+                  //   await file.writeAsBytes(image.encodeJpg(orientationFixedImg));
+                  // }
+                  if (mounted) {
+                    setState(() {});
+                  }
+                  data = await _entity.thumbnailDataWithSize(
+                    ThumbnailSize((size.width * scale).toInt(),
+                        (size.height * scale).toInt()),
+                  );
+                  if (mounted) {
+                    setState(() {});
+                  }
                 }
-                data = await _entity.thumbDataWithSize(
-                  (size.width * scale).toInt(),
-                  (size.height * scale).toInt(),
-                );
-                if (mounted) {
-                  setState(() {});
-                }
+              } catch (e) {
+                rethrow;
               }
-            } catch (e) {
-              rethrow;
-            }
 
-            final AssetPicker<AssetEntity, AssetPathEntity>? picker =
-                context.findAncestorWidgetOfExactType();
-            final DefaultAssetPickerProvider? p =
-                picker?.builder.provider as DefaultAssetPickerProvider?;
-            if (p != null) {
-              await p.currentPathEntity?.refreshPathProperties();
-              await p.switchPath(p.currentPathEntity);
-              p.selectAsset(result);
-            }
-          },
-          child: const Center(
-            child: Icon(Icons.camera_enhance, size: 42.0),
-          ),
-        );
-      },
+              final AssetPicker<AssetEntity, AssetPathEntity>? picker =
+                  context.findAncestorWidgetOfExactType();
+              final DefaultAssetPickerProvider? p =
+                  (picker?.builder as DefaultAssetPickerBuilderDelegate?)
+                      ?.provider;
+              if (p != null) {
+                p.currentPath = await p.currentPath!.obtainForNewProperties();
+                await p.switchPath(p.currentPath);
+                p.selectAsset(result);
+              }
+            },
+            child: const Center(
+              child: Icon(Icons.camera_enhance, size: 42.0),
+            ),
+          );
+        },
+      ),
     );
   }
 
